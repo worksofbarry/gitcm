@@ -61,7 +61,6 @@ Dcl-Proc GitLogParse Export;
   If (gGitLog.FilePtr = *Null);
     //Failed to open file
     ptrToErrno = get_errno(); 
-    showMessage('File closed: ' + %Char(errno));
     Return;
   ENDIF;
 
