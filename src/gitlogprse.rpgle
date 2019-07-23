@@ -8,27 +8,11 @@ Ctl-Opt NoMain;
 
 //************************
 
-Dcl-S  gRecords Int(5) Inz(0);
-Dcl-Ds gGitLog  LikeDS(File_Temp);
-Dcl-S  gKey     Char(6);
-
-Dcl-S gIsText Ind;
-Dcl-S gText   Varchar(128);
-
-//************************
-
-Dcl-S gUser  Char(10) Inz(*User);
-Dcl-S gFocus Varchar(128);
-
 Dcl-Pr get_errno Pointer ExtProc('__errno');
 End-Pr;
 
 Dcl-S ptrToErrno Pointer;
 Dcl-s errno Int(10) based(ptrToErrno);
-
-Dcl-Pr sleep Uns(10) ExtProc('sleep');
-  *N Uns(10) Value;
-End-Pr;
 
 Dcl-Proc GitLogParse Export;
   Dcl-Pi GitLogParse;
@@ -36,6 +20,20 @@ Dcl-Proc GitLogParse Export;
     pValid Ind;
     pLogEntry LikeDS(tLogEntry) Dim(MAX_COMMITS);
   End-Pi;
+
+  Dcl-S gText   Varchar(128);
+  Dcl-S  gRecords Int(5) Inz(0);
+  Dcl-Ds gGitLog  LikeDS(File_Temp);
+  Dcl-S  gKey     Char(6);
+
+  Dcl-S gIsText Ind;
+
+  //************************
+
+  Dcl-S gUser  Char(10) Inz(*User);
+  Dcl-S gFocus Varchar(128);
+
+  Clear pLogEntry;
 
   gFocus = %Trim(pFile);
   If (gFocus = '*ALL');
@@ -88,9 +86,10 @@ Dcl-Proc GitLogParse Export;
         if (gIsText = *On);
           //Last commit finished, write to file?
           pLogEntry(gRecords).Text = gText;
-          Clear gText;
-          gIsText = *Off;
         ENDIF;
+
+        gText = '';
+        gIsText = *Off;
         gRecords += 1;
 
         If (gRecords > MAX_COMMITS);
@@ -117,6 +116,12 @@ Dcl-Proc GitLogParse Export;
 
     gGitLog.RtvData = '';
   Enddo;
+
+
+  if (gIsText = *On);
+    //Last commit finished, write to file?
+    pLogEntry(gRecords).Text = gText;
+  ENDIF;
 
   CloseFile(gGitLog.FilePtr);
 

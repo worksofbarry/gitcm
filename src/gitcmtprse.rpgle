@@ -36,6 +36,8 @@ Dcl-Proc GitListCommitFiles Export;
     pFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
   End-Pi;
 
+  Clear pFiles;
+
   gFocus = %Trim(pCommit);
   gGitLog.PathFile = '/tmp/' + %TrimR(gUser) + 'git.log';
 
