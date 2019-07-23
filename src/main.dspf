@@ -7,9 +7,9 @@
      A* DISPLAY DTA
      A            @1SEL          1A  B  7  3
      A            @XCOMMIT       7A  O  7  6
-     A            @XUSER        19   O  7 17
-     A            @XDATE        15A  O  7 44
-     A            @XTEXT        35A  O  7 70
+     A            @XUSER        25   O  7 17
+     A            @XDATE        25A  O  7 44
+     A            @XTEXT        50A  O  7 70
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
      A                                      SFLPAG(0016)
