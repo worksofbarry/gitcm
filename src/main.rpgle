@@ -189,27 +189,27 @@
 
               ReadC SFLDTA;
               If %EOF;
-                  iter;
+                iter;
               endif;
 
               Select;
                                                       // do something 5 ish
-                  When @1SEL = '5';
-                    CommitInfo(@XCOMMIT:@XTEXT);
+                When @1SEL = '5';
+                  CommitInfo(gLogEntry(rrn));
 
-                  When @1SEL = '7';                     // do something 7 ish
+                When @1SEL = '7';                     // do something 7 ish
 
-                  Other;
+                Other;
 
-                    Write FOOTER_FMT;
-                    @1sel = *blank;
-                    leaveSr;
+                  Write FOOTER_FMT;
+                  @1sel = *blank;
+                  leaveSr;
 
               EndSl;
 
               if  @1sel <> *blanks;
-                  @1sel = *blanks;
-                  update sfldta;
+                @1sel = *blanks;
+                update sfldta;
               endif;
 
               FunKey = *blanks;

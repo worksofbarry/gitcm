@@ -33,8 +33,7 @@
       //---------------------------------------------------------------*
 
           Dcl-Pi COMMITINF;
-            pCommit  Char(7);
-            pMessage Char(50);
+            pCommit LikeDS(tLogEntry);
           End-Pi;
           
      Fcommit    CF   E             WorkStn Sfile(SFLDta:Rrn)
@@ -109,9 +108,9 @@
             Write HEADER_FMT;
             Write FOOTER_FMT;
 
-            @XCOMMIT = pCommit;
-            @XMSG    = pMessage;
-            GitListCommitFiles(pCommit:gChangedFiles);
+            @XCOMMIT = pCommit.Hash;
+            @XMSG    = pCommit.Text;
+            GitListCommitFiles(pCommit.Hash:gChangedFiles);
 
           EndSr;
 

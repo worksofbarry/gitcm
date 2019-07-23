@@ -35,8 +35,7 @@ Dcl-Pr GitListCommitFiles ExtProc('GITLISTCOMMITFILES');
 End-Pr;
 
 Dcl-Pr CommitInfo ExtPgm('COMMITINF');
-  pCommit  Char(7);
-  pMessage Char(50);
+  pCommit LikeDS(tLogEntry);
 End-Pr;
 
 //********************************
