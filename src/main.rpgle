@@ -1,4 +1,6 @@
 
+      /COPY 'headers/gitcm.rpgle'
+     
      Fmain      CF   E             WorkStn Sfile(SFLDta:Rrn)
      F                                     IndDS(WkStnInd)
      F                                     InfDS(fileinfo)
@@ -51,6 +53,8 @@
         Dcl-S LastRrn                 Like(Rrn);
         Dcl-S RrnCount                Like(Rrn);
         Dcl-S EmptySfl     Ind;
+        Dcl-S ValidRepo    Ind Inz(*Off); 
+        Dcl-S lCommits     Int(5);
  
      DFILEINFO         DS
      D  FILENM           *FILE
@@ -68,11 +72,8 @@
      D index           S              2  0 Inz
       //---------------------------------------------------------------*
 
-     D                 DS
-     D glogEntry                     69    Dim(50)
-     D  glUser                       19    OVERLAY(glogEntry) Inz(*Blank)
-     D  glDate                       15    OVERLAY(glogEntry:*Next) Inz(*Blank)
-     D  glText                       35    OVERLAY(glogEntry:*Next) Inz(*Blank)
+        Dcl-Ds gLogEntry LikeDS(tLogEntry) Dim(MAX_COMMITS);
+
       //------------------------------------------------------------reb04
 
         Dow Not Exit; // Continue process until user presses F6
@@ -108,29 +109,42 @@
 
           Select;
 
-          When PageDown;
-          SflSize = SflSize + 17;
+            When PageDown;
+              SflSize = SflSize + 17;
 
-          When PageUp;
-          SflSize = SflSize + 17;
+            When PageUp;
+              SflSize = SflSize + 17;
 
-          When SflSize = 0;
-          SflSize = 17;
-          SflRrn = 1;
+            When SflSize = 0;
+              SflSize = 17;
+              SflRrn = 1;
 
-          for Index = 1 to
-          %Elem(glogEntry);
+              GitLogParse('*ALL':ValidRepo:gLogEntry);
 
-              @xuser =  %trim(gluser(Index)) + 'User ' + %editc(index:'3');
-              @xcommit = 'ABCD123';
-              @xdate =  %trim(gldate(Index)) + 'Date ' + %editc(index:'3');
-              @xtext =  %trim(gltext(Index)) + 'Text ' + %editc(index:'3');
+              if (ValidRepo);
 
-            Write SFLDTA;
-            Rrn = Rrn + 1;
-            RrnCount = RrnCount + 1;
+                lCommits = %Lookup(*blank:glogEntry(*).hash);
+                If (lCommits = 0); //We do this incase the DS is filled
+                  lCommits = %Elem(gLogEntry); 
+                Endif;
 
-            endfor;
+                for Index = 1 to lCommits;
+
+                  @xcommit = glogEntry(index).Hash;
+                  @xuser =  glogEntry(index).Author;
+                  @xdate =  glogEntry(index).Date;
+                  @xtext =  glogEntry(index).Text;
+
+                  Write SFLDTA;
+                  Rrn = Rrn + 1;
+                  RrnCount = RrnCount + 1;
+
+                endfor;
+
+              Else; //No commits
+                EmptySfl = *On;
+                exsr #exitpgm;
+              Endif;
 
           EndSl;
 
