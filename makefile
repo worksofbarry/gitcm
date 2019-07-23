@@ -1,12 +1,16 @@
 
 LIBRARY=BARRY
 
+
 main.pgm: pasecall.rpgle gitlogprse.rpgle main.rpgle
+commitinf.pgm: pasecall.rpgle gitcmtprse.rpgle commitinf.rpgle
+
 main.rpgle: main.dspf
+commitinf.rpgle: commit.dspf
 
 %.pgm:
 	$(eval modules := $(patsubst %,$(LIBRARY)/%,$(basename $(filter %.rpgle %.sqlrpgle,$(notdir $^)))))
-	system "CRTPGM PGM($(LIBRARY)/$*) MODULE($(modules))"
+	system "CRTPGM PGM($(LIBRARY)/$*) MODULE($(modules)) ENTMOD(*PGM)"
 
 %.rpgle:
 	system "CRTRPGMOD MODULE($(LIBRARY)/$*) SRCSTMF('src/$*.rpgle') DBGVIEW(*SOURCE)"

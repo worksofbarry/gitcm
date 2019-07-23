@@ -30,26 +30,19 @@ Dcl-Pr sleep Uns(10) ExtProc('sleep');
   *N Uns(10) Value;
 End-Pr;
 
-Dcl-Proc GitLogParse Export;
-  Dcl-Pi GitLogParse;
-    pFile  Char(128) Const;
-    pValid Ind;
-    pLogEntry LikeDS(tLogEntry) Dim(MAX_COMMITS);
+Dcl-Proc GitListCommitFiles Export;
+  Dcl-Pi GitListCommitFiles;
+    pCommit Char(128) Const;
+    pFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
   End-Pi;
 
-  gFocus = %Trim(pFile);
-  If (gFocus = '*ALL');
-    gFocus = '';
-  Elseif (gFocus <> '');
-    gFocus = ' -- ' + gFocus;
-  Endif;
-
+  gFocus = %Trim(pCommit);
   gGitLog.PathFile = '/tmp/' + %TrimR(gUser) + 'git.log';
 
   //Program will assume CURDIR is git repo
 
   //First we need to take the content of GIT LOG into a stream file
-  PASE('/QOpenSys/pkgs/bin/git --no-pager log -r ' + gFocus
+  PASE('/QOpenSys/pkgs/bin/git diff-tree --no-commit-id --name-only -r ' + gFocus
       + x'4F' + ' iconv -f UTF-8 -t ISO8859-1 > ' + %TrimR(gGitLog.PathFile));
 
   //Next we will want to read that stream file
@@ -57,6 +50,8 @@ Dcl-Proc GitLogParse Export;
   gGitLog.OpenMode = 'r' + x'00';
   gGitLog.FilePtr  = OpenFile(%addr(gGitLog.PathFile)
                              :%addr(gGitLog.OpenMode));
+
+  //sleep(1);
 
   If (gGitLog.FilePtr = *Null);
     //Failed to open file
@@ -77,44 +72,18 @@ Dcl-Proc GitLogParse Export;
       Iter;
     ENDIF;
 
+    If (gRecords > MAX_FILES);
+      Leave;
+    Endif;
+
+    gRecords += 1;
+
     gGitLog.RtvData = %xlate(x'00':' ':gGitLog.RtvData);//End of record null
     gGitLog.RtvData = %xlate(x'25':' ':gGitLog.RtvData);//Line feed (LF)
     gGitLog.RtvData = %xlate(x'0D':' ':gGitLog.RtvData);//Carriage return (CR)
     gGitLog.RtvData = %xlate(x'05':' ':gGitLog.RtvData);//Tab
 
-    gKey = %Subst(gGitLog.RtvData:1:6);
-
-    Select;
-      When (gKey = 'commit');
-        if (gIsText = *On);
-          //Last commit finished, write to file?
-          pLogEntry(gRecords).Text = gText;
-          Clear gText;
-          gIsText = *Off;
-        ENDIF;
-        gRecords += 1;
-
-        If (gRecords > MAX_COMMITS);
-          Leave;
-        Endif;
-
-        pLogEntry(gRecords).Hash = %Subst(gGitLog.RtvData:8:7);
-
-      When (gKey = 'Author');
-        pLogEntry(gRecords).Author = %Subst(gGitLog.RtvData:9);
-
-      When (gKey = 'Date:');
-        pLogEntry(gRecords).Date = %Subst(gGitLog.RtvData:9);
-
-      When (gGitLog.RtvData = *Blank);
-        gIsText = *On;
-
-      Other;
-        If (gIsText);
-          gText += %Trim(gGitLog.RtvData) + ' ';
-        ENDIF;
-
-    ENDSL;
+    pFiles(gRecords).Path = %TrimR(gGitLog.RtvData);
 
     gGitLog.RtvData = '';
   Enddo;
@@ -122,10 +91,9 @@ Dcl-Proc GitLogParse Export;
   CloseFile(gGitLog.FilePtr);
 
   If (gRecords = 0);
-    pValid = *Off;
-    showMessage('The file you provided may be invalid.');
+    ptrToErrno = get_errno(); 
+    showMessage('No commits found.');
   Else;
-    pValid = *On;
   ENDIF;
 
   *InLR = *On;

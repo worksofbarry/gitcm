@@ -126,6 +126,8 @@
                 lCommits = %Lookup(*blank:glogEntry(*).hash);
                 If (lCommits = 0); //We do this incase the DS is filled
                   lCommits = %Elem(gLogEntry); 
+                Else;
+                  lCommits -= 1;
                 Endif;
 
                 for Index = 1 to lCommits;
@@ -193,7 +195,7 @@
               Select;
                                                       // do something 5 ish
                   When @1SEL = '5';
-
+                    CommitInfo(@XCOMMIT:@XTEXT);
 
                   When @1SEL = '7';                     // do something 7 ish
 
