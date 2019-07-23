@@ -102,6 +102,8 @@
           Write HEADER_FMT;
           Write FOOTER_FMT;
 
+          GitLogParse('*ALL':ValidRepo:gLogEntry);
+
         EndSr;
 
         //----------- Begin Fill ----------------------------
@@ -118,8 +120,6 @@
             When SflSize = 0;
               SflSize = 17;
               SflRrn = 1;
-
-              GitLogParse('*ALL':ValidRepo:gLogEntry);
 
               if (ValidRepo);
 
@@ -173,6 +173,9 @@
             When (Funkey = F03);
               exsr #exitpgm;
               leaveSr;
+            WHEN (FunKey = F05);
+              GitLogParse('*ALL':ValidRepo:gLogEntry);
+              
             When (Funkey = F06);
           Endsl;
 
