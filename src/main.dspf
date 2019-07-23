@@ -47,7 +47,7 @@
      A                                  1115TIME
      A                                  1124DATE
      A                                      EDTCDE(Y)
-     A                                  1 58'Display Array'
+     A                                  1 58'Display Commits'
      A                                      DSPATR(UL)
      A                                      COLOR(WHT)
      A                                  2 15'5=View 7=Reset branch to here'
