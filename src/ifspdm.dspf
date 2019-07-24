@@ -4,8 +4,8 @@
      A          R SFLDTA                    SFL
      A            RRN            4Y 0H
      A* DISPLAY DTA
-     A            @1SEL          1A  B  8  3
-     A            @XFILE        21A  O  8  7
+     A            @1SEL          1A  B  9  3
+     A            @XFILE        21A  O  9  7
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
      A                                      SFLPAG(10)
@@ -18,9 +18,9 @@
      A            SFLRRN         4S 0H      SFLRCDNBR(CURSOR)
      A            SFLSIZE        5S 0P
      A*
-     A                                  7  2'Opt'
+     A                                  8  2'Opt'
      A                                      DSPATR(HI)
-     A                                  7  7'Name'
+     A                                  8  7'Name'
      A                                      DSPATR(HI)
      A          R FOOTER_FMT
      A                                      OVERLAY
@@ -30,7 +30,9 @@
      A            SRC_MBR       10A  O  1  2
      A                                  1 34'Work IFS PDM'
      A                                      COLOR(WHT)
-     A                                  5  3'2=Edit 5=Display'
+     A                                  5  2'Type options, press Enter.'
+     A                                      COLOR(BLU)
+     A                                  6  3'2=Edit    5=Display'
      A                                      COLOR(BLU)
      A                                  3  2'Directory . . . . '
-     A            @XDIR         10A  B  3 25DSPATR(UL)
+     A            @XDIR         10A  O  3 25
