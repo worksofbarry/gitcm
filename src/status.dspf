@@ -42,7 +42,8 @@
      A                                  2 40'Status'
      A                                      DSPATR(UL)
      A                                      COLOR(WHT)
-     A                                  4  3'5=Diff A=Add R=Reset'
+     A                                  4  3'5=Diff A=Add -
+     A                                      R=Reset U=Undo'
      A                                      COLOR(BLU)
      A          R COMMIT                    WINDOW(*DFT 9 46)
      A                                  1 18'Make commit'

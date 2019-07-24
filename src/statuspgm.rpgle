@@ -240,6 +240,13 @@
                            %TrimR(gChangedFiles(rrn).Path));
                       GitStatusParse(gChangedFiles);
 
+                    When @1SEL = 'U';
+                      PASE('/QOpenSys/pkgs/bin/git checkout -- ' +
+                           %TrimR(gChangedFiles(rrn).Path));
+                      PASE('setccsid 1252 ' +
+                           %TrimR(gChangedFiles(rrn).Path));
+                      GitStatusParse(gChangedFiles);
+
                     Other;
 
                       Write FOOTER_FMT;

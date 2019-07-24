@@ -98,8 +98,7 @@ Dcl-Proc GitStatusParse Export;
   CloseFile(gGitLog.FilePtr);
 
   If (gRecords = 0);
-    ptrToErrno = get_errno(); 
-    showMessage('No commits found.');
+    ptrToErrno = get_errno();
   Else;
   ENDIF;
 
