@@ -79,6 +79,7 @@
      D index           S              2  0 Inz
           
           Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
+          Dcl-S commitWindow Ind;
 
         //------------------------------------------------------------reb04
 
@@ -184,6 +185,25 @@
 
               When (Funkey = F06);
                 //Make commit
+                commitWindow = *On;
+
+                Dow (commitWindow);
+                  EXFMT COMMIT;
+
+                  Select;
+                    When (Funkey = F10);
+                      //Do commit
+                      CMTMSG = %ScanRpl('"':'\"':CMTMSG);
+                      PASE('/QOpenSys/pkgs/bin/git commit -m "'
+                            + %Trim(CMTMSG) + '"');
+                      CMTMSG = *Blank;
+                      commitWindow = *Off;
+                      GitStatusParse(gChangedFiles);
+
+                    When (Funkey = F12);
+                      commitWindow = *Off;
+                  Endsl;
+                Enddo;
 
               When (Funkey = F09);
                 PASE('/QOpenSys/pkgs/bin/git push');
