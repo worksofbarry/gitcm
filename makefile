@@ -7,11 +7,13 @@ main.pgm: pasecall.rpgle gitlogprse.rpgle main.rpgle
 commitinf.pgm: pasecall.rpgle gitcmtprse.rpgle commitinf.rpgle
 diff.pgm: pasecall.rpgle gitdiffget.rpgle diff.rpgle
 statuspgm.pgm: pasecall.rpgle gitstatus.rpgle statuspgm.rpgle
+wrkifspdm.pgm: pasecall.rpgle wrkifspdm.rpgle
 
 main.rpgle: main.dspf
 commitinf.rpgle: commit.dspf
 diff.rpgle: diffscrn.dspf
 statuspgm.rpgle: status.dspf
+wrkifspdm.rpgle: ifspdm.dspf
 
 %.pgm:
 	$(eval modules := $(patsubst %,$(LIBRARY)/%,$(basename $(filter %.rpgle %.sqlrpgle,$(notdir $^)))))
