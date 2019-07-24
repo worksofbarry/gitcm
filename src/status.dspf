@@ -1,5 +1,9 @@
      A                                      DSPSIZ(*DS3)
      A                                      INDARA
+     A                                      CA05(05)
+     A                                      CA06(06)
+     A                                      CA09(09)
+     A                                      CA10(10)
      A                                      CA12(12)
      A          R SFLDTA                    SFL
      A            RRN            4Y 0H
@@ -9,7 +13,7 @@
      A            @XATTR         1A  P
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
-     A                                      SFLPAG(0016)
+     A                                      SFLPAG(0014)
      A                                      SFLSIZ(&SFLSIZE)
      A                                      OVERLAY
      A  85                                  SFLDSPCTL
@@ -27,7 +31,11 @@
      A                                      DSPATR(UL)
      A          R FOOTER_FMT
      A                                      OVERLAY
-     A                                 12  3'F12=Back'
+     A                                 23  3'F5=Refresh -
+     A                                      F6=Commit -
+     A                                      F9=Push -
+     A                                      F10=Fetch/Pull -
+     A                                      F12=Back'
      A                                      COLOR(BLU)
      A          R HEADER_FMT
      A            SRC_MBR       10A  O  1  2

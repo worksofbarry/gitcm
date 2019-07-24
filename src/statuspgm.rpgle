@@ -179,6 +179,19 @@
             ExFmt SFLCTL;
 
             Select;
+              When (Funkey = F05);
+                GitStatusParse(gChangedFiles);
+
+              When (Funkey = F06);
+                //Make commit
+
+              When (Funkey = F09);
+                PASE('/QOpenSys/pkgs/bin/git push');
+
+              When (Funkey = F10);
+                PASE('/QOpenSys/pkgs/bin/git fetch ' +
+                     '&& /QOpenSys/pkgs/bin/git pull');
+
               When (Funkey = F12);
                 exsr #exitpgm;
                 leaveSr;
