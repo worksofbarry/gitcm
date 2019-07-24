@@ -179,6 +179,7 @@
               GitLogParse('*ALL':ValidRepo:gLogEntry);
               
             When (Funkey = F06);
+              STATUSPGM();
           Endsl;
 
           If Rrn > 1 and Not PageDown;    

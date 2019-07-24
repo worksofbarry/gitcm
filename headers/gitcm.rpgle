@@ -26,7 +26,8 @@ End-Pr;
 Dcl-C MAX_FILES 50;
 
 Dcl-Ds tChangedFiles Qualified Template;
-  Path Char(64);
+  Status Int(3);
+  Path   Char(64);
 End-Ds;
 
 Dcl-Pr GitListCommitFiles ExtProc('GITLISTCOMMITFILES');
@@ -39,3 +40,31 @@ Dcl-Pr CommitInfo ExtPgm('COMMITINF');
 End-Pr;
 
 //********************************
+
+Dcl-C MAX_LINES    1000;
+Dcl-C GIT_LINE_LEN 128;
+
+Dcl-Pr GitDiffGetter ExtProc('GITDIFFGETTER');
+  pCommit Char(128) Const;
+  pFile   Char(128) Const;
+  oLines  Char(GIT_LINE_LEN) Dim(MAX_LINES);
+End-Pr;
+
+Dcl-Pr DIFF ExtPgm;
+  pCommit Char(7);
+  pFile   Char(64);
+End-Pr;
+
+//********************************
+
+
+Dcl-C RED 1;
+Dcl-C GREEN 2;
+Dcl-C ORANGE 3;
+
+Dcl-Pr GitStatusParse ExtProc('GITSTATUSPARSE');
+  pFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
+End-Pr;
+
+Dcl-Pr STATUSPGM ExtPgm;
+End-Pr;

@@ -30,13 +30,14 @@
         Dcl-C HELP       X'F3';
         Dcl-C PRINT      X'F6';
 
+        Dcl-S HEAD Char(7) Inz('HEAD');
+
       //---------------------------------------------------------------*
 
-          Dcl-Pi COMMITINF;
-            pCommit LikeDS(tLogEntry);
+          Dcl-Pi STATUSPGM;
           End-Pi;
           
-     Fcommit    CF   E             WorkStn Sfile(SFLDta:Rrn)
+     Fstatus    CF   E             WorkStn Sfile(SFLDta:Rrn)
      F                                     IndDS(WkStnInd)
      F                                     InfDS(fileinfo)
 
@@ -108,10 +109,7 @@
             Write HEADER_FMT;
             Write FOOTER_FMT;
 
-            @XCOMMIT = pCommit.Hash;
-            @XMSG    = pCommit.Text;
-            @XDATE   = pCommit.Date;
-            GitListCommitFiles(pCommit.Hash:gChangedFiles);
+            GitStatusParse(gChangedFiles);
 
           EndSr;
 
@@ -138,6 +136,16 @@
                 Endif;
 
                 for Index = 1 to lFiles;
+
+                  Select;
+                    When (gChangedFiles(index).Status = RED);
+                      @xattr = x'28';
+                    When (gChangedFiles(index).Status = GREEN);
+                      @xattr = x'20';
+                    When (gChangedFiles(index).Status = ORANGE);
+                      @xattr = x'32';
+
+                  Endsl;
 
                   @xfile = gChangedFiles(index).Path;
 
@@ -188,11 +196,18 @@
                 endif;
 
                 Select;
-                                                        // do something 5 ish
                     When @1SEL = '5';
-                      DIFF(pCommit.Hash:gChangedFiles(rrn).Path);
+                      DIFF(HEAD:gChangedFiles(rrn).Path);
 
-                    When @1SEL = '7';                     // do something 7 ish
+                    When @1SEL = 'A';
+                      PASE('/QOpenSys/pkgs/bin/git add ' + 
+                           %TrimR(gChangedFiles(rrn).Path));
+                      GitStatusParse(gChangedFiles);
+
+                    When @1SEL = 'R';
+                      PASE('/QOpenSys/pkgs/bin/git reset ' +
+                           %TrimR(gChangedFiles(rrn).Path));
+                      GitStatusParse(gChangedFiles);
 
                     Other;
 

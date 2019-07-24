@@ -32,11 +32,12 @@
 
       //---------------------------------------------------------------*
 
-          Dcl-Pi COMMITINF;
-            pCommit LikeDS(tLogEntry);
+          Dcl-Pi DIFF;
+            pCommit Char(7);
+            pFile   Char(64);
           End-Pi;
           
-     Fcommit    CF   E             WorkStn Sfile(SFLDta:Rrn)
+     Fdiffscrn  CF   E             WorkStn Sfile(SFLDta:Rrn)
      F                                     IndDS(WkStnInd)
      F                                     InfDS(fileinfo)
 
@@ -46,7 +47,7 @@
           Dcl-S LastRrn                 Like(Rrn);
           Dcl-S RrnCount                Like(Rrn);
           Dcl-S EmptySfl     Ind;
-          Dcl-S lFiles     Int(5);
+          Dcl-S lCount     Int(5);
 
           Dcl-DS WkStnInd;
             ProcessSCF     Ind        Pos(21);
@@ -75,9 +76,12 @@
 
       //---------------------------------------------------------------*
       *
-     D index           S              2  0 Inz
+          Dcl-S Index Int(5);
           
-          Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
+          Dcl-S Lines Char(GIT_LINE_LEN) Dim(MAX_LINES);
+
+          Dcl-S Action Char(1);
+          Dcl-S LongAct Char(3);
 
         //------------------------------------------------------------reb04
 
@@ -108,10 +112,9 @@
             Write HEADER_FMT;
             Write FOOTER_FMT;
 
-            @XCOMMIT = pCommit.Hash;
-            @XMSG    = pCommit.Text;
-            @XDATE   = pCommit.Date;
-            GitListCommitFiles(pCommit.Hash:gChangedFiles);
+            @XCOMMIT = pCommit;
+            @XFILE   = pFile;
+            GitDiffGetter(pCommit:pFile:Lines);
 
           EndSr;
 
@@ -130,20 +133,43 @@
                 SflSize = 17;
                 SflRrn = 1;
 
-                lFiles = %Lookup(*blank:gChangedFiles(*).Path);
-                If (lFiles = 0); //We do this incase the DS is filled
-                  lFiles = %Elem(gChangedFiles); 
-                Else;
-                  lFiles -= 1;
+                lCount = %Lookup('*EOF':Lines);
+
+                If (lCount = 0);
+                  Exsr #exitpgm;
                 Endif;
 
-                for Index = 1 to lFiles;
+                for Index = 1 to lCount;
+                  
+                  Action = %Subst(Lines(Index):1:1);
+                  LongAct = %Subst(Lines(Index):1:3);
 
-                  @xfile = gChangedFiles(index).Path;
+                  If (LongAct = '+++' OR LongAct = '---');
+                    Iter;
+                  Endif;
 
-                  Write SFLDTA;
-                  Rrn = Rrn + 1;
-                  RrnCount = RrnCount + 1;
+                  @xattr = x'3F';
+
+                  Select;
+                    When (Action = '@');
+                      @xattr = x'3A';
+
+                    When (Action = '+');
+                      @xattr = x'20';
+
+                    When (Action = '-');
+                      @xattr = x'28';
+
+                    When (Action = *Blank);
+                      @xattr = x'22';
+                  Endsl;
+
+                  If (@xattr <> x'3F');
+                    @xline = %Subst(Lines(Index):2);
+                    Write SFLDTA;
+                    Rrn = Rrn + 1;
+                    RrnCount = RrnCount + 1;
+                  Endif;
 
                 endfor;
 
@@ -175,41 +201,6 @@
                 exsr #exitpgm;
                 leaveSr;
             Endsl;
-
-            If Rrn > 1 and Not PageDown;    
-              // check for value in @1SEL
-              //Process subfile changes
-
-              Dow Not %Eof;
-
-                ReadC SFLDTA;
-                If %EOF;
-                    iter;
-                endif;
-
-                Select;
-                                                        // do something 5 ish
-                    When @1SEL = '5';
-                      DIFF(pCommit.Hash:gChangedFiles(rrn).Path);
-
-                    When @1SEL = '7';                     // do something 7 ish
-
-                    Other;
-
-                      Write FOOTER_FMT;
-                      @1sel = *blank;
-                      leaveSr;
-
-                EndSl;
-
-                if  @1sel <> *blanks;
-                    @1sel = *blanks;
-                    update sfldta;
-                endif;
-
-                FunKey = *blanks;
-              EndDo;
-            EndIf;
 
           EndSr;
           //------------ End Fill -----------------------------

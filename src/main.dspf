@@ -40,7 +40,7 @@
      A                                      DSPATR(UL)
      A          R FOOTER_FMT
      A                                      OVERLAY
-     A                                 26  3'F3=Exit F6=Branches'
+     A                                 26  3'F3=Exit F6=Status'
      A                                      COLOR(BLU)
      A          R HEADER_FMT
      A            SRC_MBR       10A  O  1  2
