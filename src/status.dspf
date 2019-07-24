@@ -50,6 +50,6 @@
      A                                      DSPATR(UL)
      A            CMTMSG       120A  B  3  3CNTFLD(40)
      A                                      CHECK(LC)
-     A                                  8  3'F10=Commit -
+     A                                  8  3'Enter=Commit -
      A                                      F12=Back'
      A                                      COLOR(BLU)

@@ -191,16 +191,16 @@
                   EXFMT COMMIT;
 
                   Select;
-                    When (Funkey = F10);
+                    When (Funkey = F12);
+                      commitWindow = *Off;
+                    
+                    Other;
                       CMTMSG = %ScanRpl('"':'\"':CMTMSG);
                       PASE('/QOpenSys/pkgs/bin/git commit -m "'
                             + %Trim(CMTMSG) + '"');
                       CMTMSG = *Blank;
                       commitWindow = *Off;
                       GitStatusParse(gChangedFiles);
-
-                    When (Funkey = F12);
-                      commitWindow = *Off;
                   Endsl;
                 Enddo;
 
