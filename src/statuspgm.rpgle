@@ -184,7 +184,6 @@
                 GitStatusParse(gChangedFiles);
 
               When (Funkey = F06);
-                //Make commit
                 commitWindow = *On;
 
                 Dow (commitWindow);
