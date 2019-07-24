@@ -8,7 +8,7 @@
      A          R SFLDTA                    SFL
      A            RRN            4Y 0H
      A* DISPLAY DTA
-     A            @1SEL          2A  B  7  2
+     A            @1SEL          1A  B  7  2
      A            @XFILE        50A  O  7  6DSPATR(&@XATTR)
      A            @XATTR         1A  P
      A* COLOR

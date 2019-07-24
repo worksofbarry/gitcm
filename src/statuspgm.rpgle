@@ -192,7 +192,6 @@
 
                   Select;
                     When (Funkey = F10);
-                      //Do commit
                       CMTMSG = %ScanRpl('"':'\"':CMTMSG);
                       PASE('/QOpenSys/pkgs/bin/git commit -m "'
                             + %Trim(CMTMSG) + '"');
