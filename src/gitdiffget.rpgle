@@ -60,7 +60,7 @@ Dcl-Proc GitDiffGetter Export;
       Iter;
     ENDIF;
 
-    If (gRecords > MAX_FILES);
+    If (gRecords > MAX_LINES);
       Leave;
     Endif;
 
