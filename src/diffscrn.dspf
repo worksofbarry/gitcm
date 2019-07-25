@@ -9,14 +9,12 @@
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
      A                                      SFLPAG(0016)
-     A                                      SFLSIZ(&SFLSIZE)
+     A                                      SFLSIZ(9999)
      A                                      OVERLAY
      A  85                                  SFLDSPCTL
      A  95                                  SFLDSP
-     A  75                                  SFLCLR
-     A  40                                  SFLEND(*MORE)
+     A N85                                  SFLCLR
      A            SFLRRN         4S 0H      SFLRCDNBR(CURSOR)
-     A            SFLSIZE        5S 0P
      A*
      A                                  9  3'Line'
      A                                      DSPATR(HI)

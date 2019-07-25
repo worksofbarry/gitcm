@@ -44,10 +44,6 @@
           Dcl-S Exit Ind Inz(*Off);
 
           Dcl-S Rrn          Zoned(4:0) Inz;
-          Dcl-S LastRrn                 Like(Rrn);
-          Dcl-S RrnCount                Like(Rrn);
-          Dcl-S EmptySfl     Ind;
-          Dcl-S lCount     Int(5);
 
           Dcl-DS WkStnInd;
             ProcessSCF     Ind        Pos(21);
@@ -80,142 +76,86 @@
           
           Dcl-S Lines Char(GIT_LINE_LEN) Dim(MAX_LINES);
 
-          Dcl-S Action Char(1);
-          Dcl-S LongAct Char(3);
-
         //------------------------------------------------------------reb04
+          Exit = *Off;
+          LoadSubfile();
 
-          Exsr InzSr;
-
-          Dow Not Exit; // Continue process until user presses F6
-              SflBegin = *On;
-              Exsr SFLClear;            // Clear subfile for new search
-              Rrn = 1;
-              SflSize = 0;
-              RrnCount = 0;
-              ExSr Fill;
-          EndDo;
-
-          *InLr = *On;
-
-          //############################################################
-          //##              Subroutines                               ##
-          //############################################################
-          BegSr InzSr;
-
-            SflRrn = 1;
-            SflSize = 0;
-            SflEnd = *On;
-            SflBegin = *on;
-            SflDspCtl = *On;
-
+          Dow (Not Exit);
             Write HEADER_FMT;
             Write FOOTER_FMT;
+            Exfmt SFLCTL;
+
+            Select;
+              When (Funkey = F12);
+                Exit = *On;
+              When (Funkey = ENTER);
+                Exit = *On;
+            Endsl;
+          Enddo;
+
+          Return;
+
+        //------------------------------------------------------------
+
+          Dcl-Proc ClearSubfile;
+            SflDspCtl = *Off;
+            SflDsp = *Off;
+
+            Write SFLCTL;
+
+            SflDspCtl = *On;
+
+            rrn = 0;
+          End-Proc;
+
+          Dcl-Proc LoadSubfile;
+            Dcl-S lCount  Int(5);
+            Dcl-S Action  Char(1);
+            Dcl-S LongAct Char(3);
+
+            ClearSubfile();
 
             @XCOMMIT = pCommit;
             @XFILE   = pFile;
             GitDiffGetter(pCommit:pFile:Lines);
 
-          EndSr;
+            lCount = %Lookup('*EOF':Lines);
 
-          //----------- Begin Fill ----------------------------
-          BegSr Fill;
+            for Index = 1 to lCount;
+              
+              Action = %Subst(Lines(Index):1:1);
+              LongAct = %Subst(Lines(Index):1:3);
 
-            Select;
+              If (LongAct = '+++' OR LongAct = '---');
+                Iter;
+              Endif;
 
-              When PageDown;
-                SflSize = SflSize + 17;
+              @xattr = x'3F';
 
-              When PageUp;
-                SflSize = SflSize + 17;
+              Select;
+                When (Action = '@');
+                  @xattr = x'3A';
 
-              When SflSize = 0;
-                SflSize = 17;
-                SflRrn = 1;
+                When (Action = '+');
+                  @xattr = x'20';
 
-                lCount = %Lookup('*EOF':Lines);
+                When (Action = '-');
+                  @xattr = x'28';
 
-                If (lCount = 0);
-                  Exsr #exitpgm;
-                Endif;
+                When (Action = *Blank);
+                  @xattr = x'22';
+              Endsl;
 
-                for Index = 1 to lCount;
-                  
-                  Action = %Subst(Lines(Index):1:1);
-                  LongAct = %Subst(Lines(Index):1:3);
+              If (@xattr <> x'3F');
+                @xline = %Subst(Lines(Index):2);
+                rrn += 1;
+                Write SFLDTA;
+              Endif;
 
-                  If (LongAct = '+++' OR LongAct = '---');
-                    Iter;
-                  Endif;
+            endfor;
 
-                  @xattr = x'3F';
-
-                  Select;
-                    When (Action = '@');
-                      @xattr = x'3A';
-
-                    When (Action = '+');
-                      @xattr = x'20';
-
-                    When (Action = '-');
-                      @xattr = x'28';
-
-                    When (Action = *Blank);
-                      @xattr = x'22';
-                  Endsl;
-
-                  If (@xattr <> x'3F');
-                    @xline = %Subst(Lines(Index):2);
-                    Write SFLDTA;
-                    Rrn = Rrn + 1;
-                    RrnCount = RrnCount + 1;
-                  Endif;
-
-                endfor;
-
-            EndSl;
-
-            EmptySfl = (Rrn <= 1);
-
-            If Not EmptySfl;
-
-              SflDspCtl = *On;
-              SflDsp = *on;
-              WRITE HEADER_FMT;
-              Write FOOTER_FMT;
-
-            Else;
-
-              SflDspCtl = *On;
-              SflDsp = *Off;
-              SflBegin = *On;
-              WRITE HEADER_FMT;
-              WRITE FOOTER_FMT;
-
-            EndIf;
-
-            ExFmt SFLCTL;
-
-            Select;
-              When (Funkey = F12);
-                exsr #exitpgm;
-                leaveSr;
-            Endsl;
-
-          EndSr;
-          //------------ End Fill -----------------------------
-
-          begsr #exitpgm;
-            Exit = *On;
-            *inlr = *on;
-            return;
-          endSR;
-
-          BegSr SFLClear;
-            SflClr = *On;
-            SflDsp = *Off;
-            SflDspCtl = *Off;
-            Write SFLCTL;
-            SflClr = *Off;
-            SflBegin = *Off;
-          EndSr;
+            If (rrn > 0);
+              SflDsp = *On;
+              SFLRRN = 1;
+            Endif;
+          End-Proc;
