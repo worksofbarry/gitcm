@@ -57,7 +57,7 @@ Dcl-Proc GitListCommitFiles Export;
 
   If (gGitLog.FilePtr = *Null);
     //Failed to open file
-    ptrToErrno = get_errno(); 
+    ptrToErrno = get_errno();
     Return;
   ENDIF;
 
@@ -92,7 +92,7 @@ Dcl-Proc GitListCommitFiles Export;
   CloseFile(gGitLog.FilePtr);
 
   If (gRecords = 0);
-    ptrToErrno = get_errno(); 
+    ptrToErrno = get_errno();
     showMessage('No commits found.');
   Else;
   ENDIF;

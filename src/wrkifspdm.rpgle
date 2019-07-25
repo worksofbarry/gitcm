@@ -44,20 +44,10 @@
 
           Dcl-S Rrn          Zoned(4:0) Inz;
           Dcl-S LastRrn                 Like(Rrn);
-          Dcl-S RrnCount                Like(Rrn);
-          Dcl-S EmptySfl     Ind;
 
           Dcl-DS WkStnInd;
-            ProcessSCF     Ind        Pos(21);
-            ReprintScf     Ind        Pos(22);
-            Error          Ind        Pos(25);
-            PageDown       Ind        Pos(30);
-            PageUp         Ind        Pos(31);
             SflEnd         Ind        Pos(40);
-            SflBegin       Ind        Pos(41);
-            NoRecord       Ind        Pos(60);
             SflDspCtl      Ind        Pos(85);
-            SflClr         Ind        Pos(75);
             SflDsp         Ind        Pos(95);
           End-DS;
 
@@ -72,7 +62,7 @@
      D  SF_RRN               376    377I 0
      D  SF_RCDS              380    381I 0
 
-      //---------------------------------------------------------------*
+      //---------------------------------------------------------------
       *
      D index           S              2  0 Inz
           
@@ -83,172 +73,103 @@
             Name Char(21);
           End-Ds;
 
-        //------------------------------------------------------------reb04
+          LoadSubfile();
 
-          Exsr InzSr;
-
-          Dow Not Exit; // Continue process until user presses F6
-              SflBegin = *On;
-              Exsr SFLClear;            // Clear subfile for new search
-              Rrn = 1;
-              SflSize = 0;
-              RrnCount = 0;
-              ExSr Fill;
-          EndDo;
-
-          *InLr = *On;
-
-          //############################################################
-          //##              Subroutines                               ##
-          //############################################################
-          BegSr InzSr;
-
-            SflRrn = 1;
-            SflSize = 0;
-            SflEnd = *On;
-            SflBegin = *on;
-            SflDspCtl = *On;
-
+          Dow (Not Exit);
             Write HEADER_FMT;
             Write FOOTER_FMT;
-
-            @XDIR = pFolder;
-            getIFSFolders(pFolder);
-
-          EndSr;
-
-          //----------- Begin Fill ----------------------------
-          BegSr Fill;
-
-            Select;
-
-              When PageDown;
-                SflSize = SflSize + 17;
-
-              When PageUp;
-                SflSize = SflSize + 17;
-
-              When SflSize = 0;
-                SflSize = 17;
-                SflRrn = 1;
-
-                for Index = 1 to gFiles;
-
-                  @xfile = StreamFiles(index).Name;
-
-                  Write SFLDTA;
-                  Rrn = Rrn + 1;
-                  RrnCount = RrnCount + 1;
-
-                endfor;
-
-            EndSl;
-
-            EmptySfl = (Rrn <= 1);
-
-            If Not EmptySfl;
-
-              SflDspCtl = *On;
-              SflDsp = *on;
-              WRITE HEADER_FMT;
-              Write FOOTER_FMT;
-
-            Else;
-
-              SflDspCtl = *On;
-              SflDsp = *Off;
-              SflBegin = *On;
-              WRITE HEADER_FMT;
-              WRITE FOOTER_FMT;
-
-            EndIf;
-
-            ExFmt SFLCTL;
+            Exfmt SFLCTL;
 
             Select;
               When (Funkey = F12);
-                exsr #exitpgm;
-                leaveSr;
+                Exit = *On;
+              When (Funkey = ENTER);
+                Exsr HandleInputs;
             Endsl;
+          Enddo;
 
-            If Rrn > 1 and Not PageDown;    
-              // check for value in @1SEL
-              //Process subfile changes
+          Return;
 
-              Dow Not %Eof;
+          Begsr HandleInputs;
+            Dou (%EOF(ifspdm));
+              ReadC SFLDTA;
+              If (%EOF(ifspdm));
+                Iter;
+              Endif;
 
-                ReadC SFLDTA;
-                If %EOF;
-                    iter;
-                endif;
+              Select;
+                When @1SEL = '2';
+                  index = %Scan('.':StreamFiles(rrn).Name);
+                  if (index > 0);
+                    Name = %Subst(StreamFiles(rrn).Name:1:index-1);
+                    Extension = %Subst(StreamFiles(rrn).Name:index+1);
+                  else;
+                    Name = StreamFiles(rrn).Name;
+                    Extension = '*SAME';
+                  endif;
 
-                Select;
-                  When @1SEL = '2';
-                    index = %Scan('.':StreamFiles(rrn).Name);
-                    if (index > 0);
-                      Name = %Subst(StreamFiles(rrn).Name:1:index-1);
-                      Extension = %Subst(StreamFiles(rrn).Name:index+1);
-                    else;
-                      Name = StreamFiles(rrn).Name;
-                      Extension = '*SAME';
-                    endif;
+                  system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
+                  system('CPYFRMSTMF FROMSTMF(''' 
+                        + %Trim(pFolder) 
+                        + '/' + %Trim(StreamFiles(rrn).Name)
+                        + ''') TOMBR(''/QSYS.lib/QTEMP.lib/QSOURCE.file/' 
+                        + %Trim(Name) 
+                        + '.mbr'') MBROPT(*REPLACE)');
+                  QCmdExc('STRSEU SRCFILE(QTEMP/QSOURCE) SRCMBR(' 
+                        + %Trim(Name) + ') TYPE(' 
+                        + %Trim(Extension) + ')':200);
+                  system('CPYTOSTMF FROMMBR(''/QSYS.lib/QTEMP.lib/'
+                        + 'QSOURCE.file/' + %Trim(Name) 
+                        + '.mbr'') TOSTMF(''' 
+                        + %Trim(pFolder) 
+                        + '/' + %Trim(StreamFiles(rrn).Name)
+                        + ''') STMFOPT(*REPLACE) ENDLINFMT(*LF)');
 
-                    system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
-                    system('CPYFRMSTMF FROMSTMF(''' 
-                          + %Trim(pFolder) 
-                          + '/' + %Trim(StreamFiles(rrn).Name)
-                          + ''') TOMBR(''/QSYS.lib/QTEMP.lib/QSOURCE.file/' 
-                          + %Trim(Name) 
-                          + '.mbr'') MBROPT(*REPLACE)');
-                    QCmdExc('STRSEU SRCFILE(QTEMP/QSOURCE) SRCMBR(' 
-                          + %Trim(Name) + ') TYPE(' 
-                          + %Trim(Extension) + ')':200);
-                    system('CPYTOSTMF FROMMBR(''/QSYS.lib/QTEMP.lib/'
-                          + 'QSOURCE.file/' + %Trim(Name) 
-                          + '.mbr'') TOSTMF(''' 
-                          + %Trim(pFolder) 
-                          + '/' + %Trim(StreamFiles(rrn).Name)
-                          + ''') STMFOPT(*REPLACE) ENDLINFMT(*LF)');
+                When @1SEL = '5';
+                  QCmdExc('DSPF STMF(''' 
+                        + %Trim(pFolder) 
+                        + '/' + %Trim(StreamFiles(rrn).Name)
+                        + ''')':132);
+              Endsl;
 
-                  When @1SEL = '5';
-                    QCmdExc('DSPF STMF(''' 
-                          + %Trim(pFolder) 
-                          + '/' + %Trim(StreamFiles(rrn).Name)
-                          + ''')':132);
+              If (@1SEL <> *Blank);
+                @1SEL = *Blank;
+                Update SFLDTA;
+                SFLRRN = rrn;
+              Endif;
+            Enddo;
+          Endsr;
 
-                  Other;
-                    Write FOOTER_FMT;
-                    @1sel = *blank;
-                    leaveSr;
+        //------------------------------------------------------------
 
-                EndSl;
-
-                if  @1sel <> *blanks;
-                    @1sel = *blanks;
-                    update sfldta;
-                endif;
-
-                FunKey = *blanks;
-              EndDo;
-            EndIf;
-
-          EndSr;
-          //------------ End Fill -----------------------------
-
-          begsr #exitpgm;
-            Exit = *On;
-            *inlr = *on;
-            return;
-          endSR;
-
-          BegSr SFLClear;
-            SflClr = *On;
-            SflDsp = *Off;
+          Dcl-Proc ClearSubfile;
             SflDspCtl = *Off;
+            SflDsp = *Off;
+
             Write SFLCTL;
-            SflClr = *Off;
-            SflBegin = *Off;
-          EndSr;
+
+            SflDspCtl = *On;
+
+            rrn = 0;
+          End-Proc;
+
+          Dcl-Proc LoadSubfile;
+            ClearSubfile();
+
+            getIFSFolders(pFolder);
+
+            For index = 1 to gFiles;
+              @xfile = StreamFiles(index).Name;
+
+              rrn += 1;
+              Write SFLDTA;
+            Endfor;
+
+            If (rrn > 0);
+              SflDsp = *On;
+              SFLRRN = 1;
+            Endif;
+          End-Proc;
 
           Dcl-Proc getIFSFolders;
             Dcl-Pi *N;
