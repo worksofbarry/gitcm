@@ -1,5 +1,6 @@
      A                                      DSPSIZ(*DS3)
      A                                      INDARA
+     A                                      CA04(04)
      A                                      CA05(05)
      A                                      CA06(06)
      A                                      CA09(09)
@@ -31,7 +32,8 @@
      A                                      DSPATR(UL)
      A          R FOOTER_FMT
      A                                      OVERLAY
-     A                                 23  3'F5=Refresh -
+     A                                 23  3'F4=Add all -
+     A                                      F5=Refresh -
      A                                      F6=Commit -
      A                                      F9=Push -
      A                                      F10=Fetch/Pull -

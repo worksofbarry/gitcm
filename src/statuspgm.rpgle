@@ -186,6 +186,10 @@
             ExFmt SFLCTL;
 
             Select;
+              When (Funkey = F04);
+                PASE('/QOpenSys/pkgs/bin/git add --all');
+                GitStatusParse(gChangedFiles);
+
               When (Funkey = F05);
                 GitStatusParse(gChangedFiles);
 
