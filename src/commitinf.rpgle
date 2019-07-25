@@ -40,25 +40,11 @@
      F                                     IndDS(WkStnInd)
      F                                     InfDS(fileinfo)
 
-          Dcl-S Exit Ind Inz(*Off);
 
           Dcl-S Rrn          Zoned(4:0) Inz;
-          Dcl-S LastRrn                 Like(Rrn);
-          Dcl-S RrnCount                Like(Rrn);
-          Dcl-S EmptySfl     Ind;
-          Dcl-S lFiles     Int(5);
 
           Dcl-DS WkStnInd;
-            ProcessSCF     Ind        Pos(21);
-            ReprintScf     Ind        Pos(22);
-            Error          Ind        Pos(25);
-            PageDown       Ind        Pos(30);
-            PageUp         Ind        Pos(31);
-            SflEnd         Ind        Pos(40);
-            SflBegin       Ind        Pos(41);
-            NoRecord       Ind        Pos(60);
             SflDspCtl      Ind        Pos(85);
-            SflClr         Ind        Pos(75);
             SflDsp         Ind        Pos(95);
           End-DS;
 
@@ -77,154 +63,100 @@
       *
      D index           S              2  0 Inz
           
-          Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
+        Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
+        Dcl-S Exit    Ind Inz(*Off);
+        Dcl-S Refresh Ind Inz(*Off);
 
         //------------------------------------------------------------reb04
+        Exit = *Off;
+        Refresh = *On;
+        
+        Dow (Not Exit);
+          If (Refresh);
+            LoadSubfile();
+            Refresh = *off;
+          Endif;
 
-          Exsr InzSr;
+          Write HEADER_FMT;
+          Write FOOTER_FMT;
+          Exfmt SFLCTL;
 
-          Dow Not Exit; // Continue process until user presses F6
-              SflBegin = *On;
-              Exsr SFLClear;            // Clear subfile for new search
-              Rrn = 1;
-              SflSize = 0;
-              RrnCount = 0;
-              ExSr Fill;
-          EndDo;
+          Select;
+            When (Funkey = F05);
+              Refresh = *On;
+                    
+            When (Funkey = F12);
+              Exit = *On;
 
-          *InLr = *On;
+            When (Funkey = ENTER);
+              Exsr HandleInputs;
+          Endsl;
+        Enddo;
 
-          //############################################################
-          //##              Subroutines                               ##
-          //############################################################
-          BegSr InzSr;
+        Return;
 
-            SflRrn = 1;
-            SflSize = 0;
-            SflEnd = *On;
-            SflBegin = *on;
-            SflDspCtl = *On;
-
-            Write HEADER_FMT;
-            Write FOOTER_FMT;
-
-            @XCOMMIT = pCommit.Hash;
-            @XMSG    = pCommit.Text;
-            @XDATE   = pCommit.Date;
-            GitListCommitFiles(pCommit.Hash:gChangedFiles);
-
-          EndSr;
-
-          //----------- Begin Fill ----------------------------
-          BegSr Fill;
+        Begsr HandleInputs;
+          Dou (%EOF(commit));
+            ReadC SFLDTA;
+            If (%EOF(commit));
+              Iter;
+            Endif;
 
             Select;
-
-              When PageDown;
-                SflSize = SflSize + 17;
-
-              When PageUp;
-                SflSize = SflSize + 17;
-
-              When SflSize = 0;
-                SflSize = 17;
-                SflRrn = 1;
-
-                lFiles = %Lookup(*blank:gChangedFiles(*).Path);
-                If (lFiles = 0); //We do this incase the DS is filled
-                  lFiles = %Elem(gChangedFiles); 
-                Else;
-                  lFiles -= 1;
-                Endif;
-
-                for Index = 1 to lFiles;
-
-                  @xfile = gChangedFiles(index).Path;
-
-                  Write SFLDTA;
-                  Rrn = Rrn + 1;
-                  RrnCount = RrnCount + 1;
-
-                endfor;
-
-            EndSl;
-
-            EmptySfl = (Rrn <= 1);
-
-            If Not EmptySfl;
-
-              SflDspCtl = *On;
-              SflDsp = *on;
-              WRITE HEADER_FMT;
-              Write FOOTER_FMT;
-
-            Else;
-
-              SflDspCtl = *On;
-              SflDsp = *Off;
-              SflBegin = *On;
-              WRITE HEADER_FMT;
-              WRITE FOOTER_FMT;
-
-            EndIf;
-
-            ExFmt SFLCTL;
-
-            Select;
-              When (Funkey = F12);
-                exsr #exitpgm;
-                leaveSr;
+              When @1SEL = '5';
+                DIFF(pCommit.Hash:gChangedFiles(rrn).Path);
             Endsl;
 
-            If Rrn > 1 and Not PageDown;    
-              // check for value in @1SEL
-              //Process subfile changes
+            If (@1SEL <> *Blank);
+              @1SEL = *Blank;
+              Update SFLDTA;
+              SFLRRN = rrn;
+            Endif;
+          Enddo;
+        Endsr;
 
-              Dow Not %Eof;
+      //------------------------------------------------------------
 
-                ReadC SFLDTA;
-                If %EOF;
-                    iter;
-                endif;
+        Dcl-Proc ClearSubfile;
+          SflDspCtl = *Off;
+          SflDsp = *Off;
 
-                Select;
-                                                        // do something 5 ish
-                    When @1SEL = '5';
-                      DIFF(pCommit.Hash:gChangedFiles(rrn).Path);
+          Write SFLCTL;
 
-                    When @1SEL = '7';                     // do something 7 ish
+          SflDspCtl = *On;
 
-                    Other;
+          rrn = 0;
+        End-Proc;
 
-                      Write FOOTER_FMT;
-                      @1sel = *blank;
-                      leaveSr;
+        Dcl-Proc LoadSubfile;
+          Dcl-S lFiles Int(5);
+          Dcl-S name   Varchar(80);
 
-                EndSl;
+          ClearSubfile();
 
-                if  @1sel <> *blanks;
-                    @1sel = *blanks;
-                    update sfldta;
-                endif;
+          @XCOMMIT = pCommit.Hash;
+          @XMSG    = pCommit.Text;
+          @XDATE   = pCommit.Date;
+          GitListCommitFiles(pCommit.Hash:gChangedFiles);
 
-                FunKey = *blanks;
-              EndDo;
-            EndIf;
+          lFiles = %Lookup(*blank:gChangedFiles(*).Path);
+          If (lFiles = 0); //We do this incase the DS is filled
+            lFiles = %Elem(gChangedFiles); 
+          Else;
+            lFiles -= 1;
+          Endif;
 
-          EndSr;
-          //------------ End Fill -----------------------------
+          for Index = 1 to lFiles;
 
-          begsr #exitpgm;
-            Exit = *On;
-            *inlr = *on;
-            return;
-          endSR;
+            @xfile = gChangedFiles(index).Path;
 
-          BegSr SFLClear;
-            SflClr = *On;
-            SflDsp = *Off;
-            SflDspCtl = *Off;
-            Write SFLCTL;
-            SflClr = *Off;
-            SflBegin = *Off;
-          EndSr;
+            rrn += 1;
+            Write SFLDTA;
+
+          Endfor;
+
+          If (rrn > 0);
+            SflDsp = *On;
+            SFLRRN = 1;
+          Endif;
+        End-Proc;
