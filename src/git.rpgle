@@ -1,7 +1,7 @@
 
       /COPY 'headers/gitcm.rpgle'
      
-     Fmain      CF   E             WorkStn Sfile(SFLDta:Rrn)
+     Fgitdsp    CF   E             WorkStn Sfile(SFLDta:Rrn)
      F                                     IndDS(WkStnInd)
      F                                     InfDS(fileinfo)
 

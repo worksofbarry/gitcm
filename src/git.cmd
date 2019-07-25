@@ -1,0 +1,1 @@
+             CMD        Prompt('Launch git client')

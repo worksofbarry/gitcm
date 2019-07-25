@@ -80,6 +80,7 @@
           
           Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
           Dcl-S commitWindow Ind;
+          Dcl-S name         Varchar(80);
 
         //------------------------------------------------------------reb04
 
@@ -148,7 +149,12 @@
 
                   Endsl;
 
-                  @xfile = gChangedFiles(index).Path;
+                  name = %TrimR(gChangedFiles(index).Path);
+                  If (gChangedFiles(index).Text <> *Blank);
+                    name += ' (' + %TrimR(gChangedFiles(index).Text) + ')';
+                  Endif;
+
+                  @xfile = name;
 
                   Write SFLDTA;
                   Rrn = Rrn + 1;

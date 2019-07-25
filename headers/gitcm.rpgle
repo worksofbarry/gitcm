@@ -37,6 +37,7 @@ Dcl-C MAX_FILES 50;
 Dcl-Ds tChangedFiles Qualified Template;
   Status Int(3);
   Path   Char(64);
+  Text   Char(16);
 End-Ds;
 
 Dcl-Pr GitListCommitFiles ExtProc('GITLISTCOMMITFILES');

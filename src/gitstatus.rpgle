@@ -30,7 +30,7 @@ Dcl-Proc GitStatusParse Export;
     pFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
   End-Pi;
 
-  Dcl-S Status Char(1);
+  Dcl-S Status Char(1) Dim(2);
 
   Clear pFiles;
 
@@ -77,20 +77,29 @@ Dcl-Proc GitStatusParse Export;
     gGitLog.RtvData = %xlate(x'0D':' ':gGitLog.RtvData);//Carriage return (CR)
     gGitLog.RtvData = %xlate(x'05':' ':gGitLog.RtvData);//Tab
 
-    Status = %Subst(gGitLog.RtvData:1:1);
+    Status(1) = %Subst(gGitLog.RtvData:1:1);
+    Status(2) = %Subst(gGitLog.RtvData:2:1);
+
+    pFiles(gRecords).Path = %TrimR(%Subst(gGitLog.RtvData:4));
 
     Select;
-      When (Status = '?');
+      When (Status(1) = '?');
         pFiles(gRecords).Status = ORANGE;
-      When (Status = 'M');
+        pFiles(gRecords).Text = 'new file';
+      When (Status(1) = 'M');
         pFiles(gRecords).Status = GREEN;
-      When (Status = 'A');
+      When (Status(1) = 'A');
         pFiles(gRecords).Status = GREEN;
+      When (Status(1) = 'R');
+        pFiles(gRecords).Status = GREEN;
+         pFiles(gRecords).Text = 'renamed';
       Other;
         pFiles(gRecords).Status = RED;
     Endsl;
 
-    pFiles(gRecords).Path = %TrimR(%Subst(gGitLog.RtvData:3));
+    If (Status(2) = 'D');
+       pFiles(gRecords).Text = 'deleted';
+    Endif;
 
     gGitLog.RtvData = '';
   Enddo;
