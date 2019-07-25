@@ -203,6 +203,12 @@
                     QCmdExc('STRSEU SRCFILE(QTEMP/QSOURCE) SRCMBR(' 
                           + %Trim(Name) + ') TYPE(' 
                           + %Trim(Extension) + ')':200);
+                    system('CPYTOSTMF FROMMBR(''/QSYS.lib/QTEMP.lib/'
+                          + 'QSOURCE.file/' + %Trim(Name) 
+                          + '.mbr'') TOSTMF(''' 
+                          + %Trim(pFolder) 
+                          + '/' + %Trim(StreamFiles(rrn).Name)
+                          + ''') STMFOPT(*REPLACE) ENDLINFMT(*LF)');
 
                   When @1SEL = '5';
                     QCmdExc('DSPF STMF(''' 
