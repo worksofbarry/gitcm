@@ -96,13 +96,16 @@ Dcl-Proc GitStatusParse Export;
       When (Status(1) = 'D');
         pFiles(gRecords).Status = GREEN;
          pFiles(gRecords).Text = 'deleted';
-      Other;
+      Other; //Hello
         pFiles(gRecords).Status = RED;
     Endsl;
 
-    If (Status(2) = 'D');
-       pFiles(gRecords).Text = 'deleted';
-    Endif;
+    Select;
+      When (Status(2) = 'M');
+        pFiles(gRecords).Text = 're-changed';
+      When (Status(2) = 'D');
+        pFiles(gRecords).Text = 'deleted';
+    Endsl;
 
     gGitLog.RtvData = '';
   Enddo;
