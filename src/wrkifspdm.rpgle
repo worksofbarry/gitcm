@@ -46,7 +46,6 @@
           Dcl-S LastRrn                 Like(Rrn);
 
           Dcl-DS WkStnInd;
-            SflEnd         Ind        Pos(40);
             SflDspCtl      Ind        Pos(85);
             SflDsp         Ind        Pos(95);
           End-DS;
@@ -73,6 +72,7 @@
             Name Char(21);
           End-Ds;
 
+          Exit = *Off;
           LoadSubfile();
 
           Dow (Not Exit);

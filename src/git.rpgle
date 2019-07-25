@@ -9,17 +9,8 @@
       
         Dcl-S Exit Ind Inz(*Off);
         Dcl-DS WkStnInd;
-          ProcessSCF     Ind        Pos(21);
-          ReprintScf     Ind        Pos(22);
-          Error          Ind        Pos(25);
-          PageDown       Ind        Pos(30);
-          PageUp         Ind        Pos(31);
-          SflEnd         Ind        Pos(40);
-          SflBegin       Ind        Pos(41);
-          NoRecord       Ind        Pos(60);
-          SflDspCtl      Ind        Pos(85);
-          SflClr         Ind        Pos(75);
-          SflDsp         Ind        Pos(95);
+            SflDspCtl      Ind        Pos(85);
+            SflDsp         Ind        Pos(95);
         End-DS;
   
         Dcl-C F01        X'31';
@@ -49,12 +40,8 @@
         Dcl-C HELP       X'F3';
         Dcl-C PRINT      X'F6';
 
-        Dcl-S Rrn          Zoned(4:0) Inz;
-        Dcl-S LastRrn                 Like(Rrn);
-        Dcl-S RrnCount                Like(Rrn);
-        Dcl-S EmptySfl     Ind;
+        Dcl-S rrn          Zoned(4:0) Inz;
         Dcl-S ValidRepo    Ind Inz(*Off); 
-        Dcl-S lCommits     Int(5);
  
      DFILEINFO         DS
      D  FILENM           *FILE
@@ -74,168 +61,101 @@
 
         Dcl-Ds gLogEntry LikeDS(tLogEntry) Dim(MAX_COMMITS);
         Dcl-S  gUser     Char(10) Inz(*USER);
+        Dcl-S  Refresh   Ind Inz(*On);
 
       //------------------------------------------------------------reb04
 
-        PASE('hi > /tmp/' + %TrimR(gUser) + 'git.log');
+        PASE('echo hi > /tmp/' + %TrimR(gUser) + 'git.log');
         system('CHGATR OBJ(''/tmp/' + %TrimR(gUser)
               + 'git.log'') ATR(*CCSID) VALUE(819)');
 
-        Dow Not Exit; // Continue process until user presses F6
-            SflBegin = *On;
-            Exsr SFLClear;            // Clear subfile for new search
-            Rrn = 1;
-            SflSize = 0;
-            RrnCount = 0;
-            ExSr Fill;
-
-        EndDo;
-
-        *InLr = *On;
-
-        //############################################################
-        //##              Subroutines                               ##
-        //############################################################
-        BegSr *InzSr;
-
-          SflRrn = 1;
-          SflSize = 0;
-          SflEnd = *On;
-          SflBegin = *on;
-          SflDspCtl = *On;
+        Exit = *Off;
+        Refresh = *On;
+        Dow (Not Exit);
+          If (Refresh);
+            LoadSubfile();
+            Refresh = *On;
+          Endif;
 
           Write HEADER_FMT;
           Write FOOTER_FMT;
-
-          GitLogParse('*ALL':ValidRepo:gLogEntry);
-
-        EndSr;
-
-        //----------- Begin Fill ----------------------------
-        BegSr Fill;
-
-          Select;
-
-            When PageDown;
-              SflSize = SflSize + 17;
-
-            When PageUp;
-              SflSize = SflSize + 17;
-
-            When SflSize = 0;
-              SflSize = 17;
-              SflRrn = 1;
-
-              if (ValidRepo);
-
-                lCommits = %Lookup(*blank:glogEntry(*).hash);
-                If (lCommits = 0); //We do this incase the DS is filled
-                  lCommits = %Elem(gLogEntry); 
-                Else;
-                  lCommits -= 1;
-                Endif;
-
-                for Index = 1 to lCommits;
-
-                  @xcommit = glogEntry(index).Hash;
-                  @xuser =  glogEntry(index).Author;
-                  @xdate =  glogEntry(index).Date;
-                  @xtext =  glogEntry(index).Text;
-
-                  Write SFLDTA;
-                  Rrn = Rrn + 1;
-                  RrnCount = RrnCount + 1;
-
-                endfor;
-
-              Else; //No commits
-                EmptySfl = *On;
-                exsr #exitpgm;
-              Endif;
-
-          EndSl;
-
-          EmptySfl = (Rrn <= 1);
-
-          If Not EmptySfl;
-
-            SflDspCtl = *On;
-            SflDsp = *on;
-            WRITE HEADER_FMT;
-            Write FOOTER_FMT;
-
-          Else;
-
-            SflDspCtl = *On;
-            SflDsp = *Off;
-            SflBegin = *On;
-            WRITE HEADER_FMT;
-            WRITE FOOTER_FMT;
-
-          EndIf;
-
-          ExFmt SFLCTL;
+          Exfmt SFLCTL;
 
           Select;
             When (Funkey = F03);
-              exsr #exitpgm;
-              leaveSr;
+              Exit = *On;
             WHEN (FunKey = F05);
-              GitLogParse('*ALL':ValidRepo:gLogEntry);
-              
+              Refresh = *On;
             When (Funkey = F06);
               STATUSPGM();
+            When (Funkey = ENTER);
+              Exsr HandleInputs;
           Endsl;
+        Enddo;
 
-          If Rrn > 1 and Not PageDown;    
-            // check for value in @1SEL
-            //Process subfile changes
+        Return;
 
-            Dow Not %Eof;
+        Begsr HandleInputs;
+          Dou (%EOF(gitdsp));
+            ReadC SFLDTA;
+            If (%EOF(gitdsp));
+              Iter;
+            Endif;
 
-              ReadC SFLDTA;
-              If %EOF;
-                iter;
-              endif;
-
-              Select;
-                                                      // do something 5 ish
+            Select;
                 When @1SEL = '5';
                   CommitInfo(gLogEntry(rrn));
+            Endsl;
 
-                When @1SEL = '7';                     // do something 7 ish
+            If (@1SEL <> *Blank);
+              @1SEL = *Blank;
+              Update SFLDTA;
+              SFLRRN = rrn;
+            Endif;
+          Enddo;
+        Endsr;
 
-                Other;
+      //------------------------------------------------------------
 
-                  Write FOOTER_FMT;
-                  @1sel = *blank;
-                  leaveSr;
-
-              EndSl;
-
-              if  @1sel <> *blanks;
-                @1sel = *blanks;
-                update sfldta;
-              endif;
-
-              FunKey = *blanks;
-            EndDo;
-          EndIf;
-
-        EndSr;
-        //------------ End Fill -----------------------------
-
-        begsr #exitpgm;
-          Exit = *On;
-          *inlr = *on;
-          return;
-        endSR;
-
-        BegSr SFLClear;
-          SflClr = *On;
-          SflDsp = *Off;
+        Dcl-Proc ClearSubfile;
           SflDspCtl = *Off;
+          SflDsp = *Off;
+
           Write SFLCTL;
-          SflClr = *Off;
-          SflBegin = *Off;
-        EndSr;
+
+          SflDspCtl = *On;
+
+          rrn = 0;
+        End-Proc;
+
+        Dcl-Proc LoadSubfile;
+          Dcl-S lCommits     Int(5);
+
+          ClearSubfile();
+
+          GitLogParse('*ALL':ValidRepo:gLogEntry);
+
+          lCommits = %Lookup(*blank:glogEntry(*).hash);
+          If (lCommits = 0); //We do this incase the DS is filled
+            lCommits = %Elem(gLogEntry); 
+          Else;
+            lCommits -= 1;
+          Endif;
+
+          for Index = 1 to lCommits;
+
+            @xcommit = glogEntry(index).Hash;
+            @xuser =  glogEntry(index).Author;
+            @xdate =  glogEntry(index).Date;
+            @xtext =  glogEntry(index).Text;
+
+            rrn += 1;
+            Write SFLDTA;
+
+          endfor;
+
+          If (rrn > 0);
+            SflDsp = *On;
+            SFLRRN = 1;
+          Endif;
+        End-Proc;
