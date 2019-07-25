@@ -1,7 +1,7 @@
 
 LIBRARY=BARRY
 
-all: main.pgm commitinf.pgm diff.pgm statuspgm.pgm
+all: main.pgm commitinf.pgm diff.pgm statuspgm.pgm wrkifspdm.pgm
 
 main.pgm: pasecall.rpgle gitlogprse.rpgle main.rpgle
 commitinf.pgm: pasecall.rpgle gitcmtprse.rpgle commitinf.rpgle

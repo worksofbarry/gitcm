@@ -77,6 +77,8 @@
      D index           S              2  0 Inz
           
           Dcl-S  gFiles      Int(5);
+          Dcl-S  Name        Char(10);
+          Dcl-S  Extension   Char(10);
           Dcl-Ds StreamFiles Qualified Dim(500);
             Name Char(21);
           End-Ds;
@@ -181,13 +183,37 @@
                 endif;
 
                 Select;
-                    When @1SEL = '5';
+                  When @1SEL = '2';
+                    index = %Scan('.':StreamFiles(rrn).Name);
+                    if (index > 0);
+                      Name = %Subst(StreamFiles(rrn).Name:1:index-1);
+                      Extension = %Subst(StreamFiles(rrn).Name:index+1);
+                    else;
+                      Name = StreamFiles(rrn).Name;
+                      Extension = '*SAME';
+                    endif;
 
-                    Other;
+                    system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
+                    system('CPYFRMSTMF FROMSTMF(''' 
+                          + %Trim(pFolder) 
+                          + '/' + %Trim(StreamFiles(rrn).Name)
+                          + ''') TOMBR(''/QSYS.lib/QTEMP.lib/QSOURCE.file/' 
+                          + %Trim(Name) 
+                          + '.mbr'') MBROPT(*REPLACE)');
+                    QCmdExc('STRSEU SRCFILE(QTEMP/QSOURCE) SRCMBR(' 
+                          + %Trim(Name) + ') TYPE(' 
+                          + %Trim(Extension) + ')':200);
 
-                      Write FOOTER_FMT;
-                      @1sel = *blank;
-                      leaveSr;
+                  When @1SEL = '5';
+                    QCmdExc('DSPF STMF(''' 
+                          + %Trim(pFolder) 
+                          + '/' + %Trim(StreamFiles(rrn).Name)
+                          + ''')':132);
+
+                  Other;
+                    Write FOOTER_FMT;
+                    @1sel = *blank;
+                    leaveSr;
 
                 EndSl;
 

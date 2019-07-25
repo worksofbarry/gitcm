@@ -4,6 +4,15 @@ Dcl-Pr PASE ExtProc('CM_PASECALL');
   pCommand Char(1024) Const;
 END-PR;
 
+Dcl-PR system Int(10) extproc('system');
+  *N Pointer    value options(*string);
+End-PR;
+
+Dcl-PR QCmdExc  extpgm('QCMDEXC');
+  *N             Char(1024)  options(*varsize) const;
+  *N             Packed(15:5) const;
+End-PR;
+
 //********************************
 
 Dcl-C MAX_COMMITS 50;
