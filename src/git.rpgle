@@ -73,8 +73,13 @@
       //---------------------------------------------------------------*
 
         Dcl-Ds gLogEntry LikeDS(tLogEntry) Dim(MAX_COMMITS);
+        Dcl-S  gUser     Char(10) Inz(*USER);
 
       //------------------------------------------------------------reb04
+
+        PASE('hi > /tmp/' + %TrimR(gUser) + 'git.log');
+        system('CHGATR OBJ(''/tmp/' + %TrimR(gUser)
+              + 'git.log'') ATR(*CCSID) VALUE(819)');
 
         Dow Not Exit; // Continue process until user presses F6
             SflBegin = *On;
