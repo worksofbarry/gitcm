@@ -44,24 +44,11 @@
           Dcl-S Exit Ind Inz(*Off);
 
           Dcl-S Rrn          Zoned(4:0) Inz;
-          Dcl-S LastRrn                 Like(Rrn);
-          Dcl-S RrnCount                Like(Rrn);
-          Dcl-S EmptySfl     Ind;
-          Dcl-S lFiles     Int(5);
 
-          Dcl-DS WkStnInd;
-            ProcessSCF     Ind        Pos(21);
-            ReprintScf     Ind        Pos(22);
-            Error          Ind        Pos(25);
-            PageDown       Ind        Pos(30);
-            PageUp         Ind        Pos(31);
-            SflEnd         Ind        Pos(40);
-            SflBegin       Ind        Pos(41);
-            NoRecord       Ind        Pos(60);
+        Dcl-DS WkStnInd;
             SflDspCtl      Ind        Pos(85);
-            SflClr         Ind        Pos(75);
             SflDsp         Ind        Pos(95);
-          End-DS;
+        End-DS;
 
      DFILEINFO         DS
      D  FILENM           *FILE
@@ -80,214 +67,155 @@
           
           Dcl-Ds gChangedFiles LikeDS(tChangedFiles) Dim(MAX_FILES);
           Dcl-S commitWindow Ind;
-          Dcl-S name         Varchar(80);
+          Dcl-S Refresh Ind;
 
         //------------------------------------------------------------reb04
+        Exit = *Off;
+        Refresh = *On;
+        
+        Dow (Not Exit);
+          If (Refresh);
+            LoadSubfile();
+            Refresh = *off;
+          Endif;
 
-          Exsr InzSr;
+          Write HEADER_FMT;
+          Write FOOTER_FMT;
+          Exfmt SFLCTL;
 
-          Dow Not Exit; // Continue process until user presses F6
-              SflBegin = *On;
-              Exsr SFLClear;            // Clear subfile for new search
-              Rrn = 1;
-              SflSize = 0;
-              RrnCount = 0;
-              ExSr Fill;
-          EndDo;
+          Select;
+            When (Funkey = F05);
+              Refresh = *On;
 
-          *InLr = *On;
+            When (Funkey = F06);
+              commitWindow = *On;
 
-          //############################################################
-          //##              Subroutines                               ##
-          //############################################################
-          BegSr InzSr;
-
-            SflRrn = 1;
-            SflSize = 0;
-            SflEnd = *On;
-            SflBegin = *on;
-            SflDspCtl = *On;
-
-            Write HEADER_FMT;
-            Write FOOTER_FMT;
-
-            GitStatusParse(gChangedFiles);
-
-          EndSr;
-
-          //----------- Begin Fill ----------------------------
-          BegSr Fill;
-
-            Select;
-
-              When PageDown;
-                SflSize = SflSize + 17;
-
-              When PageUp;
-                SflSize = SflSize + 17;
-
-              When SflSize = 0;
-                SflSize = 17;
-                SflRrn = 1;
-
-                lFiles = %Lookup(*blank:gChangedFiles(*).Path);
-                If (lFiles = 0); //We do this incase the DS is filled
-                  lFiles = %Elem(gChangedFiles); 
-                Else;
-                  lFiles -= 1;
-                Endif;
-
-                for Index = 1 to lFiles;
-
-                  Select;
-                    When (gChangedFiles(index).Status = RED);
-                      @xattr = x'28';
-                    When (gChangedFiles(index).Status = GREEN);
-                      @xattr = x'20';
-                    When (gChangedFiles(index).Status = ORANGE);
-                      @xattr = x'32';
-
-                  Endsl;
-
-                  name = %TrimR(gChangedFiles(index).Path);
-                  If (gChangedFiles(index).Text <> *Blank);
-                    name += ' (' + %TrimR(gChangedFiles(index).Text) + ')';
-                  Endif;
-
-                  @xfile = name;
-
-                  Write SFLDTA;
-                  Rrn = Rrn + 1;
-                  RrnCount = RrnCount + 1;
-
-                endfor;
-
-            EndSl;
-
-            EmptySfl = (Rrn <= 1);
-
-            If Not EmptySfl;
-
-              SflDspCtl = *On;
-              SflDsp = *on;
-              WRITE HEADER_FMT;
-              Write FOOTER_FMT;
-
-            Else;
-
-              SflDspCtl = *On;
-              SflDsp = *Off;
-              SflBegin = *On;
-              WRITE HEADER_FMT;
-              WRITE FOOTER_FMT;
-
-            EndIf;
-
-            ExFmt SFLCTL;
-
-            Select;
-              When (Funkey = F04);
-                PASE('/QOpenSys/pkgs/bin/git add --all');
-                GitStatusParse(gChangedFiles);
-
-              When (Funkey = F05);
-                GitStatusParse(gChangedFiles);
-
-              When (Funkey = F06);
-                commitWindow = *On;
-
-                Dow (commitWindow);
-                  EXFMT COMMIT;
-
-                  Select;
-                    When (Funkey = F12);
-                      commitWindow = *Off;
-                    
-                    Other;
-                      CMTMSG = %ScanRpl('"':'\"':CMTMSG);
-                      PASE('/QOpenSys/pkgs/bin/git commit -m "'
-                            + %Trim(CMTMSG) + '"');
-                      CMTMSG = *Blank;
-                      commitWindow = *Off;
-                      GitStatusParse(gChangedFiles);
-                  Endsl;
-                Enddo;
-
-              When (Funkey = F09);
-                PASE('/QOpenSys/pkgs/bin/git push');
-
-              When (Funkey = F10);
-                PASE('/QOpenSys/pkgs/bin/git fetch ' +
-                     '&& /QOpenSys/pkgs/bin/git pull');
-
-              When (Funkey = F12);
-                exsr #exitpgm;
-                leaveSr;
-            Endsl;
-
-            If Rrn > 1 and Not PageDown;    
-              // check for value in @1SEL
-              //Process subfile changes
-
-              Dow Not %Eof;
-
-                ReadC SFLDTA;
-                If %EOF;
-                    iter;
-                endif;
+              Dow (commitWindow);
+                EXFMT COMMIT;
 
                 Select;
-                    When @1SEL = '5';
-                      DIFF(HEAD:gChangedFiles(rrn).Path);
+                  When (Funkey = F12);
+                    commitWindow = *Off;
+                  
+                  When (Funkey = ENTER);
+                    CMTMSG = %ScanRpl('"':'\"':CMTMSG);
+                    PASE('/QOpenSys/pkgs/bin/git commit -m "'
+                          + %Trim(CMTMSG) + '"');
+                    CMTMSG = *Blank;
+                    commitWindow = *Off;
+                    Refresh = *On;
+                Endsl;
+              Enddo;
+              Refresh = *On;
 
-                    When @1SEL = 'A';
-                      PASE('/QOpenSys/pkgs/bin/git add ' + 
-                           %TrimR(gChangedFiles(rrn).Path));
-                      GitStatusParse(gChangedFiles);
+            When (Funkey = F09);
+              PASE('/QOpenSys/pkgs/bin/git push');
 
-                    When @1SEL = 'R';
-                      PASE('/QOpenSys/pkgs/bin/git reset ' +
-                           %TrimR(gChangedFiles(rrn).Path));
-                      GitStatusParse(gChangedFiles);
+            When (Funkey = F10);
+              PASE('/QOpenSys/pkgs/bin/git fetch ' +
+                    '&& /QOpenSys/pkgs/bin/git pull');
+              Refresh = *On;
+                    
+            When (Funkey = F12);
+              Exit = *On;
 
-                    When @1SEL = 'U';
-                      PASE('/QOpenSys/pkgs/bin/git checkout -- ' +
-                           %TrimR(gChangedFiles(rrn).Path));
-                      PASE('setccsid 1252 ' +
-                           %TrimR(gChangedFiles(rrn).Path));
-                      GitStatusParse(gChangedFiles);
+            When (Funkey = ENTER);
+              Exsr HandleInputs;
+          Endsl;
+        Enddo;
 
-                    Other;
+        Return;
 
-                      Write FOOTER_FMT;
-                      @1sel = *blank;
-                      leaveSr;
+        Begsr HandleInputs;
+          Dou (%EOF(status));
+            ReadC SFLDTA;
+            If (%EOF(status));
+              Iter;
+            Endif;
 
-                EndSl;
+            Select;
+              When @1SEL = '5';
+                DIFF(HEAD:gChangedFiles(rrn).Path);
 
-                if  @1sel <> *blanks;
-                    @1sel = *blanks;
-                    update sfldta;
-                endif;
+              When @1SEL = 'A';
+                PASE('/QOpenSys/pkgs/bin/git add ' + 
+                      %TrimR(gChangedFiles(rrn).Path));
+                Refresh = *On;
 
-                FunKey = *blanks;
-              EndDo;
-            EndIf;
+              When @1SEL = 'R';
+                PASE('/QOpenSys/pkgs/bin/git reset ' +
+                      %TrimR(gChangedFiles(rrn).Path));
+                Refresh = *On;
 
-          EndSr;
-          //------------ End Fill -----------------------------
+              When @1SEL = 'U';
+                PASE('/QOpenSys/pkgs/bin/git checkout -- ' +
+                      %TrimR(gChangedFiles(rrn).Path));
+                PASE('setccsid 1252 ' +
+                      %TrimR(gChangedFiles(rrn).Path));
+                Refresh = *On;
+            Endsl;
 
-          begsr #exitpgm;
-            Exit = *On;
-            *inlr = *on;
-            return;
-          endSR;
+            If (@1SEL <> *Blank);
+              @1SEL = *Blank;
+              Update SFLDTA;
+              SFLRRN = rrn;
+            Endif;
+          Enddo;
+        Endsr;
 
-          BegSr SFLClear;
-            SflClr = *On;
-            SflDsp = *Off;
-            SflDspCtl = *Off;
-            Write SFLCTL;
-            SflClr = *Off;
-            SflBegin = *Off;
-          EndSr;
+      //------------------------------------------------------------
+
+        Dcl-Proc ClearSubfile;
+          SflDspCtl = *Off;
+          SflDsp = *Off;
+
+          Write SFLCTL;
+
+          SflDspCtl = *On;
+
+          rrn = 0;
+        End-Proc;
+
+        Dcl-Proc LoadSubfile;
+          Dcl-S lFiles Int(5);
+          Dcl-S name   Varchar(80);
+
+          ClearSubfile();
+
+          GitStatusParse(gChangedFiles);
+
+          lFiles = %Lookup(*blank:gChangedFiles(*).Path);
+          If (lFiles = 0); //We do this incase the DS is filled
+            lFiles = %Elem(gChangedFiles); 
+          Else;
+            lFiles -= 1;
+          Endif;
+
+          for Index = 1 to lFiles;
+
+            Select;
+              When (gChangedFiles(index).Status = RED);
+                @xattr = x'28';
+              When (gChangedFiles(index).Status = GREEN);
+                @xattr = x'20';
+              When (gChangedFiles(index).Status = ORANGE);
+                @xattr = x'32';
+
+            Endsl;
+
+            name = %TrimR(gChangedFiles(index).Path);
+            If (gChangedFiles(index).Text <> *Blank);
+              name += ' (' + %TrimR(gChangedFiles(index).Text) + ')';
+            Endif;
+
+            @xfile = name;
+
+            rrn += 1;
+            Write SFLDTA;
+          Endfor;
+
+          If (rrn > 0);
+            SflDsp = *On;
+            SFLRRN = 1;
+          Endif;
+        End-Proc;

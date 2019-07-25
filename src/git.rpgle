@@ -74,7 +74,7 @@
         Dow (Not Exit);
           If (Refresh);
             LoadSubfile();
-            Refresh = *On;
+            Refresh = *Off;
           Endif;
 
           Write HEADER_FMT;
