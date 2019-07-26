@@ -4,8 +4,8 @@
      A          R SFLDTA                    SFL
      A            RRN            4Y 0H
      A* DISPLAY DTA
-     A            @1SEL          2A  B  9  3
-     A            @XFILE        21A  O  9  7
+     A            @1SEL          2A  B  9  4
+     A            @XFILE        21A  O  9  8
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
      A                                      SFLPAG(10)
@@ -16,9 +16,9 @@
      A N85                                  SFLCLR
      A            SFLRRN         4S 0H      SFLRCDNBR(CURSOR)
      A*
-     A                                  8  2'Opt'
+     A                                  8  3'Opt'
      A                                      DSPATR(HI)
-     A                                  8  7'Name'
+     A                                  8  8'Name'
      A                                      DSPATR(HI)
      A          R FOOTER_FMT
      A                                      OVERLAY
