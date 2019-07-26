@@ -71,6 +71,7 @@
           Dcl-Ds StreamFiles Qualified Dim(500);
             Name Char(21);
           End-Ds;
+          Dcl-S SelVal Varchar(2);
 
           Exit = *Off;
           LoadSubfile();
@@ -97,8 +98,10 @@
                 Iter;
               Endif;
 
+              SelVal = %Trim(@1SEL);
+
               Select;
-                When @1SEL = '2';
+                When SelVal = '2';
                   index = %Scan('.':StreamFiles(rrn).Name);
                   if (index > 0);
                     Name = %Subst(StreamFiles(rrn).Name:1:index-1);
@@ -125,7 +128,7 @@
                         + '/' + %Trim(StreamFiles(rrn).Name)
                         + ''') STMFOPT(*REPLACE) ENDLINFMT(*LF)');
 
-                When @1SEL = '5';
+                When SelVal = '5';
                   QCmdExc('DSPF STMF(''' 
                         + %Trim(pFolder) 
                         + '/' + %Trim(StreamFiles(rrn).Name)

@@ -4,7 +4,7 @@
      A          R SFLDTA                    SFL
      A            RRN            4Y 0H
      A* DISPLAY DTA
-     A            @1SEL          1A  B  9  3
+     A            @1SEL          2A  B  9  3
      A            @XFILE        21A  O  9  7
      A* COLOR
      A          R SFLCTL                    SFLCTL(SFLDTA)
