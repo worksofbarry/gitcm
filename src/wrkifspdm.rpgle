@@ -156,6 +156,7 @@
           Dcl-Proc LoadSubfile;
             ClearSubfile();
 
+            @xdir = pFolder;
             getIFSFolders(pFolder);
 
             For index = 1 to gFiles;
