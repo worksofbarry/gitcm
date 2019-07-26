@@ -1,0 +1,13 @@
+     A                                      DSPSIZ(*DS3)
+     A                                      INDARA
+     A                                      CA12(12)
+     A          R CONTENT
+     A                                  2 30'Git Change Management'
+     A                                      COLOR(WHT)
+     A                                  4  5'Select one of the following:'
+     A                                      COLOR(BLU)
+     A                                  6  7'1. WRKIFSPDM'
+     A                                  7  7'2. Git'
+     A            @XOPT          1A  I 20  7
+     A                                 22  2'F12=Back'
+     A                                      COLOR(BLU)

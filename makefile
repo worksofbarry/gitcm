@@ -1,19 +1,21 @@
 
 LIBRARY=BARRY
 
-all: git.pgm commitinf.pgm diff.pgm statuspgm.pgm wrkifspdm.pgm git.cmd wrkifspdm.cmd
+all: git.pgm commitinf.pgm diff.pgm statuspgm.pgm wrkifspdm.pgm gitcm.pgm
 
 git.pgm: pasecall.rpgle gitlogprse.rpgle git.rpgle
 commitinf.pgm: pasecall.rpgle gitcmtprse.rpgle commitinf.rpgle
 diff.pgm: pasecall.rpgle gitdiffget.rpgle diff.rpgle
 statuspgm.pgm: pasecall.rpgle gitstatus.rpgle statuspgm.rpgle
 wrkifspdm.pgm: pasecall.rpgle wrkifspdm.rpgle
+gitcm.pgm: pasecall.rpgle gitcm.rpgle
 
-git.rpgle: gitdsp.dspf
+git.rpgle: gitdsp.dspf git.cmd
 commitinf.rpgle: commit.dspf
 diff.rpgle: diffscrn.dspf
 statuspgm.rpgle: status.dspf
-wrkifspdm.rpgle: ifspdm.dspf
+wrkifspdm.rpgle: ifspdm.dspf wrkifspdm.cmd
+gitcm.rpgle: gitcmdsp.dspf gitcm.cmd
 
 %.pgm:
 	$(eval modules := $(patsubst %,$(LIBRARY)/%,$(basename $(filter %.rpgle %.sqlrpgle,$(notdir $^)))))
