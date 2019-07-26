@@ -84,6 +84,10 @@
           Exfmt SFLCTL;
 
           Select;
+            When (Funkey = F04);
+              PASE('/QOpenSys/pkgs/bin/git add --all');
+              Refresh = *On;
+
             When (Funkey = F05);
               Refresh = *On;
 
