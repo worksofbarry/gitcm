@@ -116,8 +116,7 @@
               PASE('/QOpenSys/pkgs/bin/git push');
 
             When (Funkey = F10);
-              PASE('/QOpenSys/pkgs/bin/git fetch ' +
-                    '&& /QOpenSys/pkgs/bin/git pull');
+              PASE('/QOpenSys/pkgs/bin/git pull');
               Refresh = *On;
                     
             When (Funkey = F12);
