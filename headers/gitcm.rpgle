@@ -13,6 +13,10 @@ Dcl-PR QCmdExc  extpgm('QCMDEXC');
   *N             Packed(15:5) const;
 End-PR;
 
+dcl-pr getenv pointer extproc('getenv');
+  *n pointer value options(*string:*trim);
+end-pr;
+
 //********************************
 
 Dcl-C MAX_COMMITS 50;

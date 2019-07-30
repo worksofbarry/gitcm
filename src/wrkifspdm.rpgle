@@ -71,12 +71,35 @@
           Dcl-Ds StreamFiles Qualified Dim(500);
             Name Char(21);
           End-Ds;
-          Dcl-S SelVal Varchar(2);
+          Dcl-S Refresh Ind;
+          Dcl-S SelVal  Varchar(2);
+
+          Dcl-S LineEndingp Pointer;
+          Dcl-S LineEnding  Varchar(5);
+
+          //***************
 
           Exit = *Off;
-          LoadSubfile();
+          Refresh = *On;
+
+          LineEndingp = getenv('LINE_ENDING');
+
+          If (LineEndingp = *Null);
+            Exit = *On;
+            showMessage('LINE_ENDING environment variable not found. '
+                      + 'Please create LINE_ENDING as one of the following: '
+                      + '*CRLF, *CR, *LF, *LFCR. Make sure it matches the '
+                      + 'line endings of all your existing source code.');
+          Else;
+            LineEnding = %Str(LineEndingp);
+          Endif;
 
           Dow (Not Exit);
+            If (Refresh);
+              LoadSubfile();
+              Refresh = *Off;
+            Endif;
+
             Write HEADER_FMT;
             Write FOOTER_FMT;
             Exfmt SFLCTL;
@@ -126,7 +149,8 @@
                         + '.mbr'') TOSTMF(''' 
                         + %Trim(pFolder) 
                         + '/' + %Trim(StreamFiles(rrn).Name)
-                        + ''') STMFOPT(*REPLACE) ENDLINFMT(*LF)');
+                        + ''') STMFOPT(*REPLACE) ENDLINFMT('
+                        + LineEnding + ')');
 
                 When SelVal = '5';
                   QCmdExc('DSPF STMF(''' 
@@ -258,3 +282,30 @@
 
             closedir(dh);
           End-Proc;
+
+          //**************
+
+          Dcl-Proc showMessage;
+            Dcl-Pi showMessage;
+              Text Varchar(8192) Const;
+            END-PI;
+
+            Dcl-DS ErrCode;
+              BytesIn  Int(10) Inz(0);
+              BytesOut Int(10) Inz(0);
+            END-DS;
+
+            Dcl-PR QUILNGTX ExtPgm('QUILNGTX');
+              MsgText     Char(8192)    Const;
+              MsgLength   Int(10)       Const;
+              MessageId   Char(7)       Const;
+              MessageFile Char(21)      Const;
+              dsErrCode   Like(ErrCode);
+            END-PR;
+
+            QUILNGTX(Text:%Len(Text):
+              '':'':
+              ErrCode);
+
+            Return;
+          END-PROC;
