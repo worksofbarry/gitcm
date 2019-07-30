@@ -94,6 +94,8 @@
             LineEnding = %Str(LineEndingp);
           Endif;
 
+          system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
+
           Dow (Not Exit);
             If (Refresh);
               LoadSubfile();
@@ -134,7 +136,6 @@
 
               Select;
                 When (SelVal = '2');
-                  system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
                   system('CPYFRMSTMF FROMSTMF(''' 
                         + %Trim(pFolder) 
                         + '/' + %Trim(StreamFiles(rrn).Name)
@@ -171,6 +172,16 @@
           Endsr;
 
           Begsr CompileOpt;
+            If (Extension = 'dspf' OR Extension = 'clle' OR
+                Extension = 'clle');
+              system('CPYFRMSTMF FROMSTMF(''' 
+                    + %Trim(pFolder) 
+                    + '/' + %Trim(StreamFiles(rrn).Name)
+                    + ''') TOMBR(''/QSYS.lib/QTEMP.lib/QSOURCE.file/' 
+                    + %Trim(Name) 
+                    + '.mbr'') MBROPT(*REPLACE)');
+            Endif;
+
             Monitor;
               Select;
                 When (Extension = 'rpgle');
@@ -190,6 +201,12 @@
                         + %Trim(StreamFiles(rrn).Name) + ''') '
                         + 'COMMIT(*NONE)':128);
                 When (Extension = 'clp' or Extension = 'clle');
+                  QCmdExc('?CRTBNDCL PGM(' + Name + ') '
+                        + 'SRCFILE(QTEMP/QSOURCE) OPTION(*EVENTF) '
+                        + 'DBGVIEW(*SOURCE)':128);
+                When (Extension = 'dspf');
+                  QCmdExc('?CRTDSPF FILE(' + Name + ') '
+                        + 'SRCFILE(QTEMP/QSOURCE)':50);
               Endsl;
             On-Error *ALL;
             Endmon;
