@@ -29,7 +29,10 @@
      A                                      COLOR(WHT)
      A                                  5  2'Type options, press Enter.'
      A                                      COLOR(BLU)
-     A                                  6  3'2=Edit    5=Display'
+     A                                  6  3'2=Edit  -
+     A                                      5=Display  -
+     A                                      14=Compile  -
+     A                                      15=Create module...'
      A                                      COLOR(BLU)
      A                                  3  2'Directory . . . . '
      A            @XDIR         10A  O  3 25

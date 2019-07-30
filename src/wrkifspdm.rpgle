@@ -121,19 +121,19 @@
                 Iter;
               Endif;
 
+              index = %Scan('.':StreamFiles(rrn).Name);
+              if (index > 0);
+                Name = %Subst(StreamFiles(rrn).Name:1:index-1);
+                Extension = %Subst(StreamFiles(rrn).Name:index+1);
+              else;
+                Name = StreamFiles(rrn).Name;
+                Extension = '*SAME';
+              endif;
+
               SelVal = %Trim(@1SEL);
 
               Select;
-                When SelVal = '2';
-                  index = %Scan('.':StreamFiles(rrn).Name);
-                  if (index > 0);
-                    Name = %Subst(StreamFiles(rrn).Name:1:index-1);
-                    Extension = %Subst(StreamFiles(rrn).Name:index+1);
-                  else;
-                    Name = StreamFiles(rrn).Name;
-                    Extension = '*SAME';
-                  endif;
-
+                When (SelVal = '2');
                   system('CRTSRCPF FILE(QTEMP/QSOURCE) RCDLEN(112)');
                   system('CPYFRMSTMF FROMSTMF(''' 
                         + %Trim(pFolder) 
@@ -152,11 +152,14 @@
                         + ''') STMFOPT(*REPLACE) ENDLINFMT('
                         + LineEnding + ')');
 
-                When SelVal = '5';
+                When (SelVal = '5');
                   QCmdExc('DSPF STMF(''' 
                         + %Trim(pFolder) 
                         + '/' + %Trim(StreamFiles(rrn).Name)
                         + ''')':132);
+
+                When (SelVal = '14');
+                  Exsr CompileOpt;
               Endsl;
 
               If (@1SEL <> *Blank);
@@ -165,6 +168,31 @@
                 SFLRRN = rrn;
               Endif;
             Enddo;
+          Endsr;
+
+          Begsr CompileOpt;
+            Monitor;
+              Select;
+                When (Extension = 'rpgle');
+                  QCmdExc('?CRTBNDRPG PGM(' + Name + ') '
+                        + 'SRCSTMF(''' + %Trim(pFolder) + '/'
+                        + %Trim(StreamFiles(rrn).Name) + ''') '
+                        + 'OPTION(*EVENTF) DBGVIEW(*SOURCE)':128);
+                When (Extension = 'sqlrpgle');
+                  QCmdExc('?CRTSQLRPGI OBJ(' + Name + ') '
+                        + 'SRCSTMF(''' + %Trim(pFolder) + '/'
+                        + %Trim(StreamFiles(rrn).Name) + ''') '
+                        + 'OPTION(*EVENTF) DBGVIEW(*SOURCE) ' 
+                        + 'COMMIT(*NONE)':128);
+                When (Extension = 'sql');
+                  QCmdExc('?RUNSQLSTM '
+                        + 'SRCSTMF(''' + %Trim(pFolder) + '/'
+                        + %Trim(StreamFiles(rrn).Name) + ''') '
+                        + 'COMMIT(*NONE)':128);
+                When (Extension = 'clp' or Extension = 'clle');
+              Endsl;
+            On-Error *ALL;
+            Endmon;
           Endsr;
 
         //------------------------------------------------------------
