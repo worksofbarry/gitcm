@@ -11,7 +11,7 @@
      A            @XUSER        25   O  7 17
      A            @XDATE        25A  O  7 44
      A            @XTEXT        50A  O  7 70
-     A* COLOR
+     A* COLOR                  HELLO
      A          R SFLCTL                    SFLCTL(SFLDTA)
      A                                      SFLPAG(0016)
      A                                      SFLSIZ(9999)
