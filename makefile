@@ -1,5 +1,3 @@
-# makefile for gitcm
-
 LIBRARY=BARRY
 
 all: git.pgm commitinf.pgm diff.pgm statuspgm.pgm wrkifspdm.pgm gitcm.pgm
