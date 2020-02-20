@@ -1,3 +1,4 @@
+# makefile for gitcm
 
 LIBRARY=BARRY
 
