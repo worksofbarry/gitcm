@@ -76,6 +76,7 @@
           
           Dcl-S Lines Char(GIT_LINE_LEN) Dim(MAX_LINES);
 
+        //Hello world!!
         //------------------------------------------------------------reb04
           Exit = *Off;
           LoadSubfile();
