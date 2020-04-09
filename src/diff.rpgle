@@ -89,8 +89,6 @@
             Select;
               When (Funkey = F12);
                 Exit = *On;
-              When (Funkey = F06);
-                Exit = *On;
               When (Funkey = ENTER);
                 Exit = *On;
             Endsl;
